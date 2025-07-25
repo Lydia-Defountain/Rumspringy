@@ -3,6 +3,8 @@ import pygame
 
 
 def main():
+    pygame.init()
+    
     print("Hello from rumspringy!")
 
 
