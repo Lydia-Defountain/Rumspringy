@@ -10,11 +10,12 @@ def main():
     clock = pygame.time.Clock()
     
     #gameboard initialization and setting creation of the play items here
+    background_image = pygame.image.load("Game_Assets/background.jpg")
+    background_image = pygame.transform.scale(background_image, (1280, 720))
 
 
     #game loop and running
     running = True
-    keys = pygame.key.get_pressed()
     while running:
         #Ways to Quit
         for event in pygame.event.get():
@@ -23,7 +24,9 @@ def main():
                 running = False
 
 
-        screen.fill("purple")
+        screen.blit(background_image, (0, 0))
+
+        
         pygame.display.flip()
         clock.tick(60)
     
