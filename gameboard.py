@@ -146,22 +146,59 @@ def draw_ui_info(screen, player, computer, placed_sets):
     """Draw game information panel"""
     ui_pos = ZONES["ui_info"]
     font = pygame.font.Font(None, 28)
+
+    # Draw background panel
+    panel_width = 300  
+    panel_height = 200
+    panel_rect = pygame.Rect(ui_pos[0] - 10, ui_pos[1] - 10, panel_width, panel_height)
     
-    info_data = [
-        (f"Your Score: {player.score}", (100, 255, 100)),
-        (f"Computer Score: {computer.score}", (255, 100, 100)),
-        ("", None),
-        (f"Cards in hand: {len(player.hand)}", (200, 100, 255)),
+    # Semi-transparent background
+    panel_surface = pygame.Surface((panel_width, panel_height))
+    panel_surface.set_alpha(180)
+    panel_surface.fill((20, 20, 20))
+    screen.blit(panel_surface, panel_rect)
+    
+    # Border
+    pygame.draw.rect(screen, (100, 100, 100), panel_rect, 2)
+    
+    # Player column (left side of UI area)
+    player_info = [
+        ("PLAYER", (255, 255, 255)),
+        (f"Score: {player.score}", (100, 255, 100)),
+        (f"Hand: {len(player.hand)}", (200, 100, 255)),
         (f"Selected: {len(player.selected_cards)}", (200, 100, 255)),
-        (f"Sets on table: {len(placed_sets)}", (200, 100, 255)),
-        ("", None),
-        ("ESC = Menu  |  H = Help", (255, 255, 150)),
     ]
     
-    for i, (line, color) in enumerate(info_data):
+    # Computer column (right side of UI area)
+    computer_info = [
+        ("COMPUTER", (255, 255, 255)),
+        (f"Score: {computer.score}", (255, 100, 100)),
+        (f"Hand: {len(computer.hand)}", (255, 150, 100)),
+        (f"Sets: {len([m for m in computer.moves if m['type'] == 'place_set'])}", (255, 150, 100)),
+    ]
+    
+    # Draw player info (left column)
+    for i, (line, color) in enumerate(player_info):
         if line and color:
             text = font.render(line, True, color)
-            screen.blit(text, (ui_pos[0], ui_pos[1] + i * 30))
+            screen.blit(text, (ui_pos[0], ui_pos[1] + i * 25))
+    
+    # Draw computer info (right column)
+    for i, (line, color) in enumerate(computer_info):
+        if line and color:
+            text = font.render(line, True, color)
+            screen.blit(text, (ui_pos[0] + 120, ui_pos[1] + i * 25))  # Offset for right column
+    
+    # Game info below both columns
+    game_info = [
+        (f"Table sets: {len(placed_sets)}", (200, 200, 200)),
+        ("ESC = Menu | H = Help", (255, 255, 150)),
+    ]
+    
+    for i, (line, color) in enumerate(game_info):
+        if line and color:
+            text = font.render(line, True, color)
+            screen.blit(text, (ui_pos[0], ui_pos[1] + 120 + i * 25))
 
 def draw_gameboard_sets(screen, placed_sets, set_owners):
     """Draw all placed sets with descriptive labels"""

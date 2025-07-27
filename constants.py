@@ -57,8 +57,8 @@ ZONES = {
     "discard": (150, 350),         # Next to deck
     "computer_hand": (300, 50),    # Top area
     "table_sets": (50, 150),       # Middle area for placed sets
-    "player_hand": (200, 600),     # Bottom area
-    "ui_info": (900, 50),          # Right side for game info
+    "player_hand": (250, 600),     # Bottom area
+    "ui_info": (980, 20),          # Right side for game info
     "turn_indicator": (500, 10),   # Saying whose turn it is
-    "toast_area": (10, 500)        # Messages in bottom left out of the way
+    "toast_area": (50, 460)        # Messages in bottom left out of the way
 }

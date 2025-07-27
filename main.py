@@ -67,6 +67,7 @@ def main():
                         is_player_turn = True
                         player_has_drawn = False
                         show_message(f"New {result['deck_type']} game started!", toast_type="success")
+                        show_message("Draw to start!")
                     elif result["type"] == "quit":
                         running = False
                     elif result["type"] == "show_screen":
