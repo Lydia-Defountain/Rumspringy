@@ -72,6 +72,20 @@ def main():
                         running = False
                     elif result["type"] == "show_screen":
                         continue  # Just showing a different screen
+                    elif result["type"] == "continue_game":
+                        # Unpack continued game state
+                        deck, player, computer, placed_sets, set_owners = result["game_state"]
+                        
+                        # Reset ALL game state variables
+                        game_over = False          # Critical - reset game over state
+                        is_player_turn = True      # Reset to player's turn
+                        player_has_drawn = False   # Reset draw state
+                        
+                        # Clear any selected cards
+                        player.selected_cards.clear()
+                        computer.selected_cards.clear()
+                        
+                        show_message(f"Continuing with preserved progress!", toast_type="success")
                 continue
 
             elif deck is not None and not game_over:
@@ -99,7 +113,7 @@ def main():
 
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE and not game_over:
-                        game_menu.show_pause_menu()
+                        game_menu.show_pause_menu(player)
                     elif event.key == pygame.K_h and not game_over:  # H for Help/How to Play
                         game_menu.show_how_to_play()
                     elif not game_over and is_player_turn:
@@ -113,7 +127,7 @@ def main():
                                 if success and len(player.hand) == 0:
                                     calculate_final_scores(player, computer)
                                     winner = determine_winner(player, computer)
-                                    game_menu.show_end_game_menu(winner, player.score, computer.score)
+                                    game_menu.show_end_game_menu(winner, player, computer)
                                     game_over = True
 
                         elif event.key == pygame.K_d:
@@ -128,7 +142,7 @@ def main():
                                     if check_win_condition(player, computer, deck):
                                         calculate_final_scores(player, computer)
                                         winner = determine_winner(player, computer)
-                                        game_menu.show_end_game_menu(winner, player.score, computer.score)
+                                        game_menu.show_end_game_menu(winner, player, computer)
                                         game_over = True
                                     else:
                                         # Continue with computer turn
@@ -142,7 +156,7 @@ def main():
                                     if check_win_condition(player, computer, deck):
                                         calculate_final_scores(player, computer)
                                         winner = determine_winner(player, computer)
-                                        game_menu.show_end_game_menu(winner, player.score, computer.score)
+                                        game_menu.show_end_game_menu(winner, player, computer)
                                         game_over = True
                                     else:
                                         is_player_turn = True

@@ -100,8 +100,11 @@ class RummyDeck:
         self.__discard = []
         self.type = type
         self.create_deck(self.type)
+        
+
         deck_pos = ZONES["deck"]
         discard_pos = ZONES["discard"]
+
         self.deck_rect = pygame.Rect(deck_pos[0], deck_pos[1], 71, 96)
         self.discard_rect = pygame.Rect(discard_pos[0], discard_pos[1], 71, 96)
         
@@ -129,6 +132,16 @@ class RummyDeck:
                 self.__cards.append(joker)
 
 
+    def add_card(self, rank, suit):
+        """Add a card to current deck"""
+        # Add to current deck
+        new_card = Card(rank, suit, self.type)
+        self.__cards.append(new_card)
+        self.shuffle_deck()
+        return new_card
+        
+    
+    
     def shuffle_deck(self):
         random.shuffle(self.__cards)
 
@@ -229,4 +242,20 @@ class RummyDeck:
             text = font.render("DISCARD", True, (100, 100, 100))
             text_rect = text.get_rect(center=self.discard_rect.center)
             screen.blit(text, text_rect)
+
+    def create_game_copy(self):
+        """Create a fresh copy of this deck for gameplay"""
+        new_deck = RummyDeck(self.type)
+        
+        # Clear the new deck and copy cards
+        new_deck._RummyDeck__cards = []
+        for card in self.__cards:
+            # Create fresh card objects
+            card_copy = Card(card.rank, card.suit, card.deck_type)
+            new_deck._RummyDeck__cards.append(card_copy)
+        
+        # Reset discard pile
+        new_deck._RummyDeck__discard = []
+        
+        return new_deck
         

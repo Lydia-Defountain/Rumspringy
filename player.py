@@ -6,6 +6,7 @@ class Player:
     def __init__(self, is_computer=False):
         self.hand = []
         self.score = 0
+        self.gold = 0
         self.augments = [] #tracking the more wacky Balatroized part
         self.moves = [] #tracking the sets placed down
         self.selected_cards = [] # Cards currently selected for placing down
