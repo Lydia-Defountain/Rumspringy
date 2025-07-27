@@ -7,7 +7,8 @@ class GameMenu:
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.is_active = False
-        self.menu_type = "pause"  # "pause" or "endgame"
+        self.menu_type = "main"
+        self.game_initialized = False 
         self.font_large = pygame.font.Font(None, 48)
         self.font_medium = pygame.font.Font(None, 36)
         
@@ -18,6 +19,18 @@ class GameMenu:
         
         self.menu_background = self.create_menu_background()
         self.selected_option = 0
+
+    def show_main_menu(self):
+        """Show main menu (initial screen)"""
+        self.menu_type = "main"
+        self.is_active = True
+        self.selected_option = 0
+        self.menu_options = [
+            "New Game - Regular Deck",
+            "New Game - Alt Deck",
+            "How to Play",
+            "Quit Game"
+        ]
 
 
     def create_new_game(self, deck_type):
@@ -47,9 +60,22 @@ class GameMenu:
             self.is_active = False
             return {"type": "resume"}
         
+        elif action == "how_to_play":
+            self.show_how_to_play()
+            return {"type": "show_screen"}
+        
+        elif action == "back_to_main":
+            self.show_main_menu()
+            return {"type": "show_screen"}
+        
+        elif action == "back_to_pause":
+            self.show_pause_menu()
+            return {"type": "show_screen"}
+        
         elif action == "new_game_reg":
             game_state = self.create_new_game("REG")
             self.is_active = False
+            self.game_initialized = True
             return {
                 "type": "new_game",
                 "deck_type": "REG",
@@ -59,6 +85,7 @@ class GameMenu:
         elif action == "new_game_alt":
             game_state = self.create_new_game("ALT")
             self.is_active = False
+            self.game_initialized = True
             return {
                 "type": "new_game", 
                 "deck_type": "ALT",
@@ -84,9 +111,19 @@ class GameMenu:
         self.selected_option = 0
         self.menu_options = [
             "Resume Game",
+            "How to Play",
             "New Game - Regular Deck",
             "New Game - Alt Deck", 
             "Quit Game"
+        ]
+
+    def show_how_to_play(self):
+        """Show how to play screen"""
+        self.menu_type = "howtoplay"
+        self.is_active = True
+        self.selected_option = 0
+        self.menu_options = [
+            "Back to Menu"
         ]
     
     def show_end_game_menu(self, winner, player_score, computer_score):
@@ -122,13 +159,25 @@ class GameMenu:
     
     def get_selected_action(self):
         """Return action based on selected menu option"""
-        if self.menu_type == "pause":
+        if self.menu_type == "main":
             actions = {
-                0: "resume",
-                1: "new_game_reg",
-                2: "new_game_alt",
+                0: "new_game_reg",
+                1: "new_game_alt",
+                2: "how_to_play",
                 3: "quit"
             }
+
+        elif self.menu_type == "pause":
+            actions = {
+                0: "resume",
+                1: "how_to_play",
+                2: "new_game_reg",
+                3: "new_game_alt",
+                4: "quit"
+            }
+        elif self.menu_type == "howtoplay":
+            back_action = "back_to_pause" if self.game_initialized else "back_to_main"
+            actions = {0: back_action}
         else:  # endgame
             actions = {
                 0: "new_game_reg",
@@ -145,10 +194,28 @@ class GameMenu:
         # Draw semi-transparent background
         screen.blit(self.menu_background, (0, 0))
         
-        if self.menu_type == "pause":
+        if self.menu_type == "main":
+            self.draw_main_menu(screen)
+        elif self.menu_type == "pause":
             self.draw_pause_menu(screen)
-        else:
+        elif self.menu_type == "endgame":
             self.draw_end_game_menu(screen)
+        elif self.menu_type == "howtoplay":
+            self.draw_how_to_play(screen)
+
+    def draw_main_menu(self, screen):
+        """Draw main menu"""
+        # Title
+        title_text = self.font_large.render("RUMSPRINGY", True, (255, 255, 255))
+        title_rect = title_text.get_rect(center=(self.screen_width // 2, 150))
+        screen.blit(title_text, title_rect)
+        
+        # Subtitle
+        subtitle_text = self.font_medium.render("A Rummy Card Game", True, (200, 200, 200))
+        subtitle_rect = subtitle_text.get_rect(center=(self.screen_width // 2, 200))
+        screen.blit(subtitle_text, subtitle_rect)
+        
+        self.draw_menu_options(screen, 300)
     
     def draw_pause_menu(self, screen):
         """Draw pause menu"""
@@ -210,3 +277,45 @@ class GameMenu:
         controls_surface = self.font_medium.render(controls_text, True, (200, 200, 200))
         controls_rect = controls_surface.get_rect(center=(self.screen_width // 2, self.screen_height - 50))
         screen.blit(controls_surface, controls_rect)
+
+    def draw_how_to_play(self, screen):
+        """Draw how to play screen"""
+        title_text = self.font_large.render("HOW TO PLAY", True, (255, 255, 255))
+        title_rect = title_text.get_rect(center=(self.screen_width // 2, 80))
+        screen.blit(title_text, title_rect)
+        
+        # How to play content
+        font_small = pygame.font.Font(None, 24)
+        instructions = [
+            "OBJECTIVE: Score more points than the computer",
+            "",
+            "TURN SEQUENCE:",
+            "1. Draw a card (from deck or discard pile)",
+            "2. Place sets (optional) - 3+ cards in groups or runs",
+            "3. Discard a card to end your turn",
+            "",
+            "VALID SETS:",
+            "• Groups: Same rank, different suits (3 Kings)",
+            "• Runs: Consecutive ranks, same suit (5-6-7 Hearts)",
+            "• Wild cards can substitute for any card",
+            "",
+            "CONTROLS:",
+            "• Click cards to select/deselect",
+            "• SPACE to place selected cards",
+            "• D to discard selected card",
+            "• ESC to pause",
+            "",
+            "SCORING:",
+            "• Gain points for cards in placed sets",
+            "• Lose points for cards left in hand at game end"
+        ]
+        
+        start_y = 140
+        for i, instruction in enumerate(instructions):
+            if instruction:  # Skip empty lines
+                color = (255, 255, 0) if instruction.isupper() and ":" in instruction else (255, 255, 255)
+                text = font_small.render(instruction, True, color)
+                screen.blit(text, (100, start_y + i * 25))
+        
+        # Back button
+        self.draw_menu_options(screen, self.screen_height - 100)

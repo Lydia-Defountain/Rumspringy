@@ -153,7 +153,9 @@ def draw_ui_info(screen, player, computer, placed_sets):
         ("", None),
         (f"Cards in hand: {len(player.hand)}", (200, 100, 255)),
         (f"Selected: {len(player.selected_cards)}", (200, 100, 255)),
-        (f"Sets on table: {len(placed_sets)}", (200, 100, 255))
+        (f"Sets on table: {len(placed_sets)}", (200, 100, 255)),
+        ("", None),
+        ("ESC = Menu  |  H = Help", (255, 255, 150)),
     ]
     
     for i, (line, color) in enumerate(info_data):

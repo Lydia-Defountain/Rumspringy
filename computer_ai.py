@@ -3,27 +3,31 @@ from gameboard import is_valid_set, position_placed_sets
 
 def computer_turn(computer, deck, placed_sets, set_owners):
     """Execute optimal computer turn"""
-    
+    messages = []
+
     # Step 1: Choose whether to draw from deck or discard
     drawn_card = choose_draw_source(computer, deck)
     if drawn_card:
         computer.add_card_to_hand(drawn_card)
-    
+        messages.append("Computer drew a card")
+
     # Step 2: Try to place optimal sets
     placed_something = try_place_sets(computer, placed_sets, set_owners)
-    
-    # Step 3: Try to add cards to existing sets
-    if not placed_something:
-        try_add_to_existing_sets(computer, placed_sets, set_owners)
+    if placed_something:
+        set_type = "group" if len(set([c.rank for c in placed_something if not c.is_wild])) == 1 else "run"
+        messages.append(f"Computer placed a {set_type} ({len(placed_something)} cards)")
+    elif try_add_to_existing_sets(computer, placed_sets, set_owners):
+        messages.append("Computer added card to existing set")    
+
     
     # Step 4: Discard optimally
     discard_card = choose_optimal_discard(computer)
     if discard_card:
         computer.hand.remove(discard_card)
         deck.discard_card(discard_card)  # Add to discard pile
-        return f"Computer discarded {discard_card.rank} of {discard_card.suit}"
+        messages.append(f"Computer discarded {discard_card.rank} of {discard_card.suit}")
     
-    return "Computer's turn complete"
+    return " • ".join(messages) if messages else "Computer completed turn"
 
 def choose_draw_source(computer, deck):
     """Decide whether to draw from deck or discard pile"""
@@ -76,9 +80,9 @@ def try_place_sets(computer, placed_sets, set_owners):
         position_placed_sets(placed_sets)
         computer.arrange_hand()
         
-        return True
+        return best_set
     
-    return False
+    return None
 
 def find_all_possible_sets(hand):
     """Find all valid sets that can be made from hand"""

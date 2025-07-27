@@ -1,7 +1,8 @@
 import pygame
-from constants import SCREEN_HEIGHT, SCREEN_WIDTH, ZONES, MESSAGE_DURATION, PURPLE, OTHER_PURPLE
+from constants import SCREEN_HEIGHT, SCREEN_WIDTH, ZONES
 from deck import RummyDeck
 from menu import GameMenu
+from toast import ToastManager
 from gameboard import check_win_condition, calculate_final_scores, determine_winner
 import gameboard
 import computer_ai
@@ -13,34 +14,35 @@ def main():
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     clock = pygame.time.Clock()
-
-
-    # Message system
-    current_message = ""
-    message_timer = 0
-
-    def show_message(text, duration=MESSAGE_DURATION):
-        """Display a message in the game prompts zone"""
-        nonlocal current_message, message_timer
-        current_message = text
-        message_timer = duration
     
-    #gameboard initialization and setting creation of the play items here
+    # Game setup
     background_image = pygame.image.load("Game_Assets/background.jpg")
-    background_image = pygame.transform.scale(background_image, (1280, 720))
+    background_image = pygame.transform.scale(background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
+    
+    # Menu system - start with main menu
     game_menu = GameMenu(SCREEN_WIDTH, SCREEN_HEIGHT)
-    deck = RummyDeck("REG")
-    deck.shuffle_deck()
-
-    # Initialize first game
-    deck, player, computer, placed_sets, set_owners = game_menu.create_new_game("REG")
-
-    #Game state
+    game_menu.show_main_menu()  # Show main menu immediately
+    
+    # Toast system
+    toast_manager = ToastManager(max_toasts=4)
+    
+    def show_message(text, duration=None, toast_type="info"):
+        """Show toast message with smart defaults"""
+        # Longer durations for important messages        
+        toast_manager.show_toast(text, duration, toast_type)
+    
+    # Game state - initialize as None until first game is created
+    deck = None
+    player = None
+    computer = None
+    placed_sets = []
+    set_owners = []
+    
+    # Game state
+    game_over = False
     is_player_turn = True
     player_has_drawn = False
-    game_over = False
     
-      
 
     #game loop and running
     running = True
@@ -51,12 +53,12 @@ def main():
                 print("See you again!")
                 running = False
 
-            # Handle pause menu input first
+            # Handle menu input (always check first)
             if game_menu.is_active:
                 action = game_menu.handle_input(event)
                 if action:
                     result = game_menu.handle_menu_action(action)
-                        
+                    
                     if result["type"] == "resume":
                         continue
                     elif result["type"] == "new_game":
@@ -65,12 +67,14 @@ def main():
                         game_over = False
                         is_player_turn = True
                         player_has_drawn = False
-                        show_message(f"New {result['deck_type']} game started!")
+                        show_message(f"New {result['deck_type']} game started!", toast_type="success")
                     elif result["type"] == "quit":
                         running = False
+                    elif result["type"] == "show_screen":
+                        continue  # Just showing a different screen
                 continue
 
-            elif not game_over:
+            elif deck is not None and not game_over:
                 if event.type == pygame.MOUSEBUTTONDOWN and is_player_turn:
                     # Deck click - draw from deck
                     if deck.handle_deck_click(event.pos) and not player_has_drawn:
@@ -96,6 +100,8 @@ def main():
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE and not game_over:
                         game_menu.show_pause_menu()
+                    elif event.key == pygame.K_h and not game_over:  # H for Help/How to Play
+                        game_menu.show_how_to_play()
                     elif not game_over and is_player_turn:
                         if event.key == pygame.K_SPACE:
                             if not player_has_drawn:
@@ -115,6 +121,7 @@ def main():
                                 discarded_card = player.selected_cards[0]
                                 player.remove_cards_from_hand([discarded_card])
                                 deck.discard_card(discarded_card)
+                                show_message(f"You discarded {discarded_card.rank} of {discarded_card.suit}", toast_type="info")
                                 
                                 # Check if game should end
                                 if not game_over and not game_menu.is_active:
@@ -129,7 +136,9 @@ def main():
                                         player_has_drawn = False
                                         show_message("Computer's turn...")
                                         
+                                        show_message("Computer is thinking...", toast_type="computer")
                                         computer_message = computer_ai.computer_turn(computer, deck, placed_sets, set_owners)
+                                        show_message(computer_message, toast_type="computer")
                                     
                                     # Check win condition after computer turn
                                     if check_win_condition(player, computer, deck):
@@ -139,38 +148,16 @@ def main():
                                         game_over = True
                                     else:
                                         is_player_turn = True
-                                        show_message(computer_message + "Your turn! Click deck to draw.")
+                                        show_message("Your turn! Click deck or discard to draw.", toast_type="turn")
 
-            
-                       
-        # Update message timer
-        if message_timer > 0:
-            message_timer -= 1
 
 
         screen.blit(background_image, (0, 0))
 
-        if not game_menu.is_active:
+        if deck is not None and not game_menu.is_active:
             deck.draw_deck(screen)
             player.draw_hand(screen)
             computer.draw_hand(screen)
-
-            #add instructions
-            instructions_pos = ZONES["instructions"]
-            font = pygame.font.Font(None, 24)
-            instructions = [
-                "Click cards to select them (yellow border)",
-                "Press SPACE to place selected cards",
-                "Press d to discard",
-                "Press esc to Pause",
-                f"Selected: {len(player.selected_cards)} cards",
-                f"Sets on table: {len(placed_sets)}"
-            ]
-            
-            for i, instruction in enumerate(instructions):
-                text = font.render(instruction, True, (255, 255, 255))
-                screen.blit(text, (instructions_pos[0], instructions_pos[1] + i * 25))
-
 
             #turn indication
             turn_pos = ZONES["turn_indicator"]
@@ -180,27 +167,16 @@ def main():
             text_rect = text.get_rect(center=(turn_pos[0], turn_pos[1]))
             screen.blit(text, text_rect)
 
-            # Draw game prompts/messages
-            prompts_pos = ZONES["game_prompts"]
-            font_medium = pygame.font.Font(None, 28)
-            
-            if message_timer > 0 and current_message:
-                # Show current message in bright purple
-                message_text = font_medium.render(current_message, True, PURPLE)
-                message_rect = message_text.get_rect(center=(prompts_pos[0], prompts_pos[1]))
-                screen.blit(message_text, message_rect)
-            elif is_player_turn and not player_has_drawn:
-                # Show draw prompt in other purple
-                draw_prompt = font_medium.render("Click deck or discard pile to draw", True, OTHER_PURPLE)
-                prompt_rect = draw_prompt.get_rect(center=(prompts_pos[0], prompts_pos[1]))
-                screen.blit(draw_prompt, prompt_rect)
-
             # Use gameboard functions
             gameboard.position_placed_sets(placed_sets)
             gameboard.draw_gameboard_sets(screen, placed_sets, set_owners)
             gameboard.draw_ui_info(screen, player, computer, placed_sets)
 
         game_menu.draw(screen)
+
+        if not game_menu.is_active:
+            toast_manager.update()
+            toast_manager.draw(screen)
         
         pygame.display.flip()
         clock.tick(60)
