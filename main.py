@@ -86,6 +86,10 @@ def main():
                         computer.selected_cards.clear()
                         
                         show_message(f"Continuing with preserved progress!", toast_type="success")
+                    elif result["type"] == "purchase_success":
+                        show_message(f"Purchased {result['item']}! Gold: {result['remaining_gold']}", toast_type="success")
+                    elif result["type"] == "purchase_failed":
+                        show_message(result["reason"], toast_type="warning")
                 continue
 
             elif deck is not None and not game_over:
@@ -113,7 +117,7 @@ def main():
 
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE and not game_over:
-                        game_menu.show_pause_menu(player)
+                        game_menu.show_pause_menu(player, deck)
                     elif event.key == pygame.K_h and not game_over:  # H for Help/How to Play
                         game_menu.show_how_to_play()
                     elif not game_over and is_player_turn:

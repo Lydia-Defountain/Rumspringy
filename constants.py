@@ -6,7 +6,7 @@ SCREEN_HEIGHT = 720
 
 REG_SUITS = ["Hearts", "Diamonds", "Clubs", "Spades"]
 REG_RANKS = [
-    "Ace",
+    "ace",
     "2",
     "3",
     "4",
@@ -16,13 +16,13 @@ REG_RANKS = [
     "8",
     "9",
     "10",
-    "Jack",
-    "Queen",
-    "King",
+    "jack",
+    "queen",
+    "king",
 ]
 ALT_SUITS = ["Hearts", "Stars", "Clubs", "Spades"]
 ALT_RANKS = [
-    "Ace",
+    "ace",
     "2",
     "3",
     "4",
@@ -32,15 +32,15 @@ ALT_RANKS = [
     "8",
     "9"
     "10",
-    "Squire",
-    "Knight",
-    "Jack",
-    "Queen",
-    "King",
+    "squire",
+    "knight",
+    "jack",
+    "queen",
+    "king",
 ]
 
 JOKER_RANKS = [
-    "Ace",
+    "ace",
     "2",
     "3",
     "4",

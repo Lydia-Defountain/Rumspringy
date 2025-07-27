@@ -21,12 +21,17 @@ def _place_new_set(player, placed_sets, set_owners):
     """Helper: Place a new set of 3+ cards"""
     if is_valid_set(player.selected_cards):
         new_set = player.selected_cards.copy()
-        set_value = sum(card.value for card in new_set)
+        base_value = sum(card.value for card in new_set)
+        set_bonus = len(new_set) * 50
+        total_score = (base_value * 10) + set_bonus
         
         # Update game state
         placed_sets.append(new_set)
         set_owners.append("player")
-        player.score += set_value
+        player.score += total_score
+
+        gold_earned = len(new_set) * 2  # 2 gold per card in set
+        player.gold += gold_earned
         
         # Record move
         player.moves.append({
@@ -40,7 +45,7 @@ def _place_new_set(player, placed_sets, set_owners):
         player.selected_cards.clear()  
         position_placed_sets(placed_sets)
         
-        return True, f"Placed {len(new_set)} cards! (+{set_value} points)"
+        return True, f"Placed {len(new_set)} cards! (+{total_score} points)"
     else:
         return False, "Invalid set! Check your cards."
 
@@ -165,6 +170,7 @@ def draw_ui_info(screen, player, computer, placed_sets):
     player_info = [
         ("PLAYER", (255, 255, 255)),
         (f"Score: {player.score}", (100, 255, 100)),
+        (f"Gold: {player.gold}", (255, 215, 0)),
         (f"Hand: {len(player.hand)}", (200, 100, 255)),
         (f"Selected: {len(player.selected_cards)}", (200, 100, 255)),
     ]

@@ -250,7 +250,7 @@ class RummyDeck:
         # Clear the new deck and copy cards
         new_deck._RummyDeck__cards = []
         for card in self.__cards:
-            # Create fresh card objects
+            # Create fresh card objects 
             card_copy = Card(card.rank, card.suit, card.deck_type)
             new_deck._RummyDeck__cards.append(card_copy)
         

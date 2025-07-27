@@ -69,8 +69,10 @@ def try_place_sets(computer, placed_sets, set_owners):
         best_set = max(best_sets, key=len)
 
         # Calculate score for this set
-        set_value = sum(card.value for card in best_set)
-        computer.score += set_value  # Update computer's score
+        base_value = sum(card.value for card in best_set)
+        set_bonus = len(best_set) * 50
+        total_score = (base_value * 10) + set_bonus
+        computer.score += total_score  # Update computer's score
         
         # Remove cards from hand
         for card in best_set:

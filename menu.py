@@ -1,5 +1,6 @@
 import pygame
-from deck import RummyDeck
+import random
+from deck import RummyDeck, Card
 from player import Player
 
 class GameMenu:
@@ -18,6 +19,7 @@ class GameMenu:
         self.player_data = None
         self.computer_data = None
         self.master_deck = None
+        self.current_deck = None
         
         self.menu_background = self.create_menu_background()
         self.selected_option = 0
@@ -80,9 +82,10 @@ class GameMenu:
             self.show_pause_menu()
             return {"type": "show_screen"}
         
+        
         elif action == "store":
             if self.player_data:
-                self.show_store_menu(self.player_data)
+                self.show_store_menu()
                 return {"type": "show_screen"}
             else:
                 return {"type": "error", "message": "No player data available"}
@@ -138,12 +141,17 @@ class GameMenu:
         surface.fill((0, 0, 0))
         return surface
     
-    def show_pause_menu(self, player):
+    def show_pause_menu(self, player=None, deck=None):
         """Show pause menu"""
         self.menu_type = "pause"
         self.is_active = True
         self.selected_option = 0
-        self.player_data = player
+        if player is not None:
+            self.player_data = player
+        if deck is not None:
+            self.current_deck = deck
+
+
         self.menu_options = [
             "Resume Game",
             "Store",              
@@ -226,7 +234,7 @@ class GameMenu:
 
         elif self.menu_type == "store":
             actions = {}
-            for i, item in enumerate(self.store_items):
+            for i in range(len(self.store_items)):
                 actions[i] = f"buy_{i}"  # buy_0, buy_1, etc.
             actions[len(self.store_items)] = "back_to_pause"
             return actions.get(self.selected_option)
@@ -259,9 +267,6 @@ class GameMenu:
         if not self.is_active:
             return
         
-        # Draw semi-transparent background
-        screen.blit(self.menu_background, (0, 0))
-        
         if self.menu_type == "main":
             self.draw_main_menu(screen)
         elif self.menu_type == "pause":
@@ -270,6 +275,8 @@ class GameMenu:
             self.draw_end_game_menu(screen)
         elif self.menu_type == "howtoplay":
             self.draw_how_to_play(screen)
+        elif self.menu_type == "store":
+            self.draw_store_menu(screen)
 
     def draw_main_menu(self, screen):
         """Draw main menu"""
@@ -316,10 +323,19 @@ class GameMenu:
         computer_rect = computer_score_text.get_rect(center=(self.screen_width // 2, 260))
         screen.blit(computer_score_text, computer_rect)
 
-        if hasattr(self.player_data, 'gold'):
-            gold_text = self.font_medium.render(f"Gold: {self.player_data.gold}", True, (255, 215, 0))
-            gold_rect = gold_text.get_rect(center=(self.screen_width // 2, 300))
-            screen.blit(gold_text, gold_rect)
+        if self.winner == "player":
+            conversion_rate = 100
+            bonus_gold = self.player_data.score // conversion_rate
+            total_gold = self.player_data.gold + bonus_gold
+            
+            # Conversion preview
+            convert_text = self.font_medium.render(f"Continue: +{bonus_gold} gold (from score)", True, (255, 215, 0))
+            convert_rect = convert_text.get_rect(center=(self.screen_width // 2, 250))
+            screen.blit(convert_text, convert_rect)
+            
+            total_text = self.font_medium.render(f"Total Gold: {total_gold}", True, (255, 215, 0))
+            total_rect = total_text.get_rect(center=(self.screen_width // 2, 275))
+            screen.blit(total_text, total_rect)
         
         self.draw_menu_options(screen, 350)
     
@@ -403,12 +419,14 @@ class GameMenu:
         computer = Player(is_computer=True)
 
         if self.player_data:
-            player.score = self.player_data.score
+            # Convert score to gold at continue (bonus for winning)
+            conversion_rate = 100  # 100 score = 1 gold 
+            bonus_gold = self.player_data.score // conversion_rate
+
             player.augments = self.player_data.augments.copy()
-            player.gold = self.player_data.gold
+            player.gold = self.player_data.gold + bonus_gold
 
         if self.computer_data:
-            computer.score = self.computer_data.score
             computer.augments = self.computer_data.augments.copy()
             computer.gold = self.computer_data.gold
 
@@ -430,33 +448,38 @@ class GameMenu:
     
 
     def _initialize_store_items(self):
-            """Initialize available store items"""
-            return [
-                {"name": "Extra Joker", "cost": 50, "description": "Add a joker to your deck", "type": "deck_card"},
-                {"name": "Lucky Draw", "cost": 30, "description": "Draw 2 cards instead of 1", "type": "augment"},
-                {"name": "Score Boost", "cost": 40, "description": "2x points for next set", "type": "augment"},
-                
-            ]
+        """Initialize available store items"""
+        return [
+            {"name": "Extra Joker", "cost": 10, "description": "Add a random joker (2-10) to your deck", "type": "deck_card"},
+            # Easy to add more later:
+            # {"name": "Lucky Draw", "cost": 30, "description": "Draw 2 cards instead of 1", "type": "augment"},
+            # {"name": "Score Boost", "cost": 40, "description": "2x points for next set", "type": "augment"},
+        ]
 
-    def show_store_menu(self, player):
-        """Show store menu with available items"""
+    def show_store_menu(self):
+        """Show store menu with all available items"""
+        if not self.player_data:
+            return
+            
         self.menu_type = "store"
         self.is_active = True
         self.selected_option = 0
-        self.current_player = player  # Store reference for purchases
         
-        # Build menu options from store items + back option
-        self.menu_options = [item["name"] + f" ({item['cost']} gold)" for item in self.store_items]
+        # Build menu options from store items
+        self.menu_options = []
+        for item in self.store_items:
+            self.menu_options.append(f"{item['name']} ({item['cost']} gold)")
+        
         self.menu_options.append("Back to Menu")
 
     
-    def _handle_purchase(self, item_index, current_deck=None):
+    def _handle_purchase(self, item_index):
         """Handle purchasing a store item"""
         if item_index >= len(self.store_items):
             return {"type": "show_screen"}
         
         item = self.store_items[item_index]
-        player = self.current_player
+        player = self.player_data
         
         if player.gold >= item["cost"]:
             player.gold -= item["cost"]
@@ -464,11 +487,11 @@ class GameMenu:
             if item["type"] == "deck_card":
                 # Add card to master deck
                 if item["name"] == "Extra Joker":
-                    joker_card = Card("joker_bought", "joker", "ALT")
-                    self.master_deck.append(joker_card)
+                    joker_rank = f"{random.randint(2, 10)}"
+                    self.master_deck.add_card(joker_rank, "joker")
 
-                    if current_deck:
-                        current_deck.add_card_immediate("joker_bought", "joker")
+                    if self.current_deck:
+                        self.current_deck.add_card(joker_rank, "joker")
 
 
             elif item["type"] == "augment":
@@ -485,47 +508,40 @@ class GameMenu:
                 "type": "purchase_failed",
                 "reason": "Not enough gold"
             }
-        
-    def add_card_to_deck(self):
-        pass
+          
 
     def draw_store_menu(self, screen):
-        """Draw store menu with items and prices"""
+        """Draw store menu"""
+        # Draw semi-transparent background
+        screen.blit(self.menu_background, (0, 0))
+        
+        # Title
         title_text = self.font_large.render("STORE", True, (255, 255, 255))
-        title_rect = title_text.get_rect(center=(self.screen_width // 2, 100))
+        title_rect = title_text.get_rect(center=(self.screen_width // 2, 150))
         screen.blit(title_text, title_rect)
         
         # Show player's gold
-        if hasattr(self, 'current_player'):
-            gold_text = self.font_medium.render(f"Gold: {self.current_player.gold}", True, (255, 215, 0))
-            gold_rect = gold_text.get_rect(center=(self.screen_width // 2, 140))
+        if self.player_data:
+            gold_text = self.font_medium.render(f"Gold: {self.player_data.gold}", True, (255, 215, 0))
+            gold_rect = gold_text.get_rect(center=(self.screen_width // 2, 200))
             screen.blit(gold_text, gold_rect)
         
-        # Draw store items
-        start_y = 200
-        for i, item in enumerate(self.store_items):
+        # Draw menu options
+        start_y = 280
+        for i, option in enumerate(self.menu_options):
             color = (255, 255, 0) if i == self.selected_option else (255, 255, 255)
             
-            # Item name and cost
-            item_text = f"{item['name']} - {item['cost']} gold"
-            text_surface = self.font_medium.render(item_text, True, color)
-            text_rect = text_surface.get_rect(center=(self.screen_width // 2, start_y + i * 60))
-            screen.blit(text_surface, text_rect)
-            
-            # Item description
-            desc_surface = self.font_small.render(item['description'], True, (200, 200, 200))
-            desc_rect = desc_surface.get_rect(center=(self.screen_width // 2, start_y + i * 60 + 25))
-            screen.blit(desc_surface, desc_rect)
+            option_text = self.font_medium.render(option, True, color)
+            option_rect = option_text.get_rect(center=(self.screen_width // 2, start_y + i * 60))
+            screen.blit(option_text, option_rect)
             
             # Selection indicator
             if i == self.selected_option:
                 indicator = self.font_medium.render(">", True, (255, 255, 0))
-                indicator_rect = indicator.get_rect(center=(text_rect.left - 30, text_rect.centery))
+                indicator_rect = indicator.get_rect(center=(option_rect.left - 30, option_rect.centery))
                 screen.blit(indicator, indicator_rect)
         
-        # Back option
-        back_index = len(self.store_items)
-        back_color = (255, 255, 0) if self.selected_option == back_index else (255, 255, 255)
-        back_text = self.font_medium.render("Back to Menu", True, back_color)
-        back_rect = back_text.get_rect(center=(self.screen_width // 2, start_y + back_index * 60))
-        screen.blit(back_text, back_rect)
+        # Controls hint
+        controls_text = self.font_medium.render("Use UP/DOWN arrows, ENTER to select", True, (200, 200, 200))
+        controls_rect = controls_text.get_rect(center=(self.screen_width // 2, self.screen_height - 50))
+        screen.blit(controls_text, controls_rect)
