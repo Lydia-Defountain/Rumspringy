@@ -20,15 +20,14 @@ def main():
     background_image = pygame.transform.scale(background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
     
     # Menu system - start with main menu
-    game_menu = GameMenu(SCREEN_WIDTH, SCREEN_HEIGHT)
+    game_menu = GameMenu(SCREEN_WIDTH, SCREEN_HEIGHT, toast_manager=None)
     game_menu.show_main_menu()  # Show main menu immediately
     
     # Toast system
     toast_manager = ToastManager(max_toasts=4)
     
     def show_message(text, duration=None, toast_type="info"):
-        """Show toast message with smart defaults"""
-        # Longer durations for important messages        
+        """Show toast message - simple FIFO"""
         toast_manager.show_toast(text, duration, toast_type)
     
     # Game state - initialize as None until first game is created
@@ -135,10 +134,8 @@ def main():
                                         is_player_turn = False
                                         player_has_drawn = False
                                         show_message("Computer's turn...")
+                                        computer_ai.computer_turn(computer, deck, placed_sets, set_owners, toast_manager)
                                         
-                                        show_message("Computer is thinking...", toast_type="computer")
-                                        computer_message = computer_ai.computer_turn(computer, deck, placed_sets, set_owners)
-                                        show_message(computer_message, toast_type="computer")
                                     
                                     # Check win condition after computer turn
                                     if check_win_condition(player, computer, deck):

@@ -37,7 +37,7 @@ def _place_new_set(player, placed_sets, set_owners):
         
         # Clean up
         player.remove_cards_from_hand(new_set)
-        player.selected_cards.clear()  # Make sure selection is cleared
+        player.selected_cards.clear()  
         position_placed_sets(placed_sets)
         
         return True, f"Placed {len(new_set)} cards! (+{set_value} points)"

@@ -1,33 +1,40 @@
-import random
+import time
 from gameboard import is_valid_set, position_placed_sets
 
-def computer_turn(computer, deck, placed_sets, set_owners):
+def computer_turn(computer, deck, placed_sets, set_owners, toast_manager):
     """Execute optimal computer turn"""
-    messages = []
 
     # Step 1: Choose whether to draw from deck or discard
     drawn_card = choose_draw_source(computer, deck)
     if drawn_card:
         computer.add_card_to_hand(drawn_card)
-        messages.append("Computer drew a card")
+        if hasattr(drawn_card, 'from_discard') and drawn_card.from_discard:
+            toast_manager.show_toast("Computer drew from discard pile", toast_type="computer")
+        else:
+            toast_manager.show_toast("Computer drew from deck", toast_type="computer")
+    toast_manager.show_toast("Computer is thinking...", toast_type="computer")
+    time.sleep(0.2)
 
     # Step 2: Try to place optimal sets
     placed_something = try_place_sets(computer, placed_sets, set_owners)
     if placed_something:
         set_type = "group" if len(set([c.rank for c in placed_something if not c.is_wild])) == 1 else "run"
-        messages.append(f"Computer placed a {set_type} ({len(placed_something)} cards)")
+        toast_manager.show_toast(f"Computer placed a {set_type} ({len(placed_something)} cards)", toast_type="computer")
+        time.sleep(0.1)
     elif try_add_to_existing_sets(computer, placed_sets, set_owners):
-        messages.append("Computer added card to existing set")    
+        toast_manager.show_toast("Computer added card to existing set", toast_type="computer")
+        time.sleep(0.1)  
 
-    
+    time.sleep(0.2)
+
     # Step 4: Discard optimally
     discard_card = choose_optimal_discard(computer)
     if discard_card:
         computer.hand.remove(discard_card)
-        deck.discard_card(discard_card)  # Add to discard pile
-        messages.append(f"Computer discarded {discard_card.rank} of {discard_card.suit}")
+        deck.discard_card(discard_card)  
+        toast_manager.show_toast(f"Computer discarded {discard_card.rank} of {discard_card.suit}", toast_type="computer")
     
-    return " • ".join(messages) if messages else "Computer completed turn"
+    return
 
 def choose_draw_source(computer, deck):
     """Decide whether to draw from deck or discard pile"""
@@ -42,11 +49,16 @@ def choose_draw_source(computer, deck):
     discard_value = calculate_card_value(top_discard, computer.hand)
     
     # If discard card is very valuable, take it
-    if discard_value > 30:  # Threshold for taking discard
-        return deck.draw_from_discard()
+    if discard_value > 30:
+        drawn_card = deck.draw_from_discard()
+        if drawn_card:
+            drawn_card.from_discard = True  
+        return drawn_card
     else:
-        # Otherwise draw from deck
-        return deck.draw_card()
+        drawn_card = deck.draw_card()
+        if drawn_card:
+            drawn_card.from_discard = False  
+        return drawn_card
 
 def try_place_sets(computer, placed_sets, set_owners):
     """Try to place the best possible sets"""

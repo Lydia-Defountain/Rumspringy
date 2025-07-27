@@ -3,7 +3,7 @@ from deck import RummyDeck
 from player import Player
 
 class GameMenu:
-    def __init__(self, screen_width, screen_height):
+    def __init__(self, screen_width, screen_height, toast_manager=None):
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.is_active = False
@@ -19,6 +19,7 @@ class GameMenu:
         
         self.menu_background = self.create_menu_background()
         self.selected_option = 0
+        self.toast_manager = toast_manager
 
     def show_main_menu(self):
         """Show main menu (initial screen)"""
@@ -51,6 +52,9 @@ class GameMenu:
         
         placed_sets = []
         set_owners = []
+
+        if self.toast_manager:
+            self.toast_manager.clear_all()
         
         return deck, player, computer, placed_sets, set_owners
     
