@@ -50,28 +50,27 @@ def main():
             if event.type == pygame.QUIT:
                 print("See you again!")
                 running = False
-            elif not game_over:
 
-                # Handle pause menu input first
-                if game_menu.is_active:
-                    action = game_menu.handle_input(event)
-                    if action:
-                        result = game_menu.handle_menu_action(action)
+            # Handle pause menu input first
+            if game_menu.is_active:
+                action = game_menu.handle_input(event)
+                if action:
+                    result = game_menu.handle_menu_action(action)
                         
-                        if result["type"] == "resume":
-                            continue
-                        elif result["type"] == "new_game":
-                            # Unpack new game state
-                            deck, player, computer, placed_sets, set_owners = result["game_state"]
-                            game_over = False
-                            is_player_turn = True
-                            player_has_drawn = False
-                            show_message(f"New {result['deck_type']} game started!")
-                        elif result["type"] == "quit":
-                            running = False
-                    continue
+                    if result["type"] == "resume":
+                        continue
+                    elif result["type"] == "new_game":
+                        # Unpack new game state
+                        deck, player, computer, placed_sets, set_owners = result["game_state"]
+                        game_over = False
+                        is_player_turn = True
+                        player_has_drawn = False
+                        show_message(f"New {result['deck_type']} game started!")
+                    elif result["type"] == "quit":
+                        running = False
+                continue
 
-
+            elif not game_over:
                 if event.type == pygame.MOUSEBUTTONDOWN and is_player_turn:
                     # Deck click - draw from deck
                     if deck.handle_deck_click(event.pos) and not player_has_drawn:
@@ -163,6 +162,7 @@ def main():
                 "Click cards to select them (yellow border)",
                 "Press SPACE to place selected cards",
                 "Press d to discard",
+                "Press esc to Pause",
                 f"Selected: {len(player.selected_cards)} cards",
                 f"Sets on table: {len(placed_sets)}"
             ]

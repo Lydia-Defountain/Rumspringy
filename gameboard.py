@@ -6,26 +6,19 @@ from constants import ZONES
 
 def place_player_cards(player, placed_sets, set_owners):
     """Place player's selected cards"""
-    print(f"DEBUG: place_player_cards called with {len(player.selected_cards)} selected cards")
     
     selected_count = len(player.selected_cards)
-    print(f"DEBUG: Selected count: {selected_count}")
     
     if selected_count >= 3:
-        print("DEBUG: Calling _place_new_set")
         return _place_new_set(player, placed_sets, set_owners)
     elif selected_count == 1:
-        print("DEBUG: Calling _add_to_existing_set")
         return _add_to_existing_set(player, placed_sets, set_owners)
     else:
-        print("DEBUG: Invalid selection count")
         return False, "Select 3+ cards for new set or 1 card to add to existing set"
 
 
 def _place_new_set(player, placed_sets, set_owners):
     """Helper: Place a new set of 3+ cards"""
-    print(f"DEBUG: Selected cards: {[(c.rank, c.suit) for c in player.selected_cards]}")
-    print(f"DEBUG: Hand size before: {len(player.hand)}")
     if is_valid_set(player.selected_cards):
         new_set = player.selected_cards.copy()
         set_value = sum(card.value for card in new_set)
@@ -44,8 +37,6 @@ def _place_new_set(player, placed_sets, set_owners):
         
         # Clean up
         player.remove_cards_from_hand(new_set)
-        print(f"DEBUG: Hand size after: {len(player.hand)}")
-        print(f"DEBUG: Selected cards after: {len(player.selected_cards)}")
         player.selected_cards.clear()  # Make sure selection is cleared
         position_placed_sets(placed_sets)
         
