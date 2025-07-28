@@ -46,6 +46,40 @@ def main():
     #game loop and running
     running = True
     while running:
+
+        def do_discard():
+            # Not sure why I need this when it worked in closure further down but oh well
+            nonlocal game_over
+            discarded_card = player.selected_cards[0]
+            player.remove_cards_from_hand([discarded_card])
+            deck.discard_card(discarded_card)
+            show_message(f"You discarded {discarded_card.rank} of {discarded_card.suit}", toast_type="info")
+
+            # Check if game should end
+            if not game_over and not game_menu.is_active:
+                if check_win_condition(player, computer, deck):
+                    calculate_final_scores(player, computer)
+                    winner = determine_winner(player, computer)
+                    game_menu.show_end_game_menu(winner, player, computer)
+                    game_over = True
+                else:
+                    # Continue with computer turn
+                    is_player_turn = False
+                    player_has_drawn = False
+                    show_message("Computer's turn...")
+                    computer_ai.computer_turn(computer, deck, placed_sets, set_owners, toast_manager)
+
+
+                # Check win condition after computer turn
+                if check_win_condition(player, computer, deck):
+                    calculate_final_scores(player, computer)
+                    winner = determine_winner(player, computer)
+                    game_menu.show_end_game_menu(winner, player, computer)
+                    game_over = True
+                else:
+                    is_player_turn = True
+                    show_message("Your turn! Click deck or discard to draw.", toast_type="turn")
+
         #Ways to Quit
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -109,6 +143,10 @@ def main():
                             player.add_card_to_hand(drawn_card)
                             player_has_drawn = True
                             show_message(f"Drew from discard: {drawn_card.rank} of {drawn_card.suit}")
+                        else:
+                            continue
+                    elif player_has_drawn and len(player.selected_cards) == 1 and deck.handle_discard_click(event.pos):
+                        do_discard()
 
                     # Hand card clicks
                     for card in player.hand:
@@ -136,35 +174,7 @@ def main():
 
                         elif event.key == pygame.K_d:
                             if player_has_drawn and len(player.selected_cards) == 1:
-                                discarded_card = player.selected_cards[0]
-                                player.remove_cards_from_hand([discarded_card])
-                                deck.discard_card(discarded_card)
-                                show_message(f"You discarded {discarded_card.rank} of {discarded_card.suit}", toast_type="info")
-                                
-                                # Check if game should end
-                                if not game_over and not game_menu.is_active:
-                                    if check_win_condition(player, computer, deck):
-                                        calculate_final_scores(player, computer)
-                                        winner = determine_winner(player, computer)
-                                        game_menu.show_end_game_menu(winner, player, computer)
-                                        game_over = True
-                                    else:
-                                        # Continue with computer turn
-                                        is_player_turn = False
-                                        player_has_drawn = False
-                                        show_message("Computer's turn...")
-                                        computer_ai.computer_turn(computer, deck, placed_sets, set_owners, toast_manager)
-                                        
-                                    
-                                    # Check win condition after computer turn
-                                    if check_win_condition(player, computer, deck):
-                                        calculate_final_scores(player, computer)
-                                        winner = determine_winner(player, computer)
-                                        game_menu.show_end_game_menu(winner, player, computer)
-                                        game_over = True
-                                    else:
-                                        is_player_turn = True
-                                        show_message("Your turn! Click deck or discard to draw.", toast_type="turn")
+                                do_discard()
 
 
 

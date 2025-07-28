@@ -220,7 +220,7 @@ class RummyDeck:
     
     def handle_discard_click(self, pos):
         """Check if discard pile was clicked"""
-        if self.discard_rect.collidepoint(pos) and len(self.__discard) > 0:
+        if self.discard_rect.collidepoint(pos):
             return True
         return False
     
