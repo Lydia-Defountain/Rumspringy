@@ -388,6 +388,17 @@ class GameMenu:
             "• Runs: Consecutive ranks, same suit (5-6-7 Hearts)",
             "• Wild cards can substitute for any card",
             "",
+        ]
+        
+        start_y = 140
+        for i, instruction in enumerate(instructions):
+            if instruction:  # Skip empty lines
+                color = (255, 255, 0) if instruction.isupper() and ":" in instruction else (255, 255, 255)
+                text = font_small.render(instruction, True, color)
+                screen.blit(text, (100, start_y + i * 25))
+
+        instructions = [
+            "","",
             "CONTROLS:",
             "• Click cards to select/deselect",
             "• SPACE to place selected cards",
@@ -404,7 +415,7 @@ class GameMenu:
             if instruction:  # Skip empty lines
                 color = (255, 255, 0) if instruction.isupper() and ":" in instruction else (255, 255, 255)
                 text = font_small.render(instruction, True, color)
-                screen.blit(text, (100, start_y + i * 25))
+                screen.blit(text, (600, start_y + i * 25))
         
         # Back button
         self.draw_menu_options(screen, self.screen_height - 100)
